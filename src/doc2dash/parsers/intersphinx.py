@@ -32,6 +32,8 @@ INV_TO_TYPE = {
     "type": types.TYPE,
     "variable": types.VARIABLE,
     "var": types.VARIABLE,
+    "label": types.SECTION,
+    "doc": types.SECTION
 }
 
 
@@ -68,12 +70,16 @@ class InterSphinxParser(IParser):
         Iterate over a dictionary as returned from Sphinx's object.inv parser
         and yield `ParserEntry`s.
         """
+
         for type_key, inv_entries in inv.items():
             dash_type = self.convert_type(type_key)
+
             if dash_type is None:
                 continue
+
             for key, data in inv_entries.items():
                 entry = self.create_entry(dash_type, key, data)
+
                 if entry is not None:
                     yield entry
 
@@ -95,6 +101,7 @@ class InterSphinxParser(IParser):
         Parameters are the dash type, intersphinx inventory key and data tuple
         """
         path_str = inv_entry_to_path(inv_entry)
+
         return ParserEntry(name=key, type=dash_type, path=path_str)
 
     def find_and_patch_entry(self, soup, entry):  # pragma: nocover
@@ -108,11 +115,14 @@ def find_and_patch_entry(soup, entry):
     link = soup.find("a", {"class": "headerlink"}, href="#" + entry.anchor)
     tag = soup.new_tag("a")
     tag["name"] = APPLE_REF_TEMPLATE.format(entry.type, entry.name)
+
     if link:
         link.parent.insert(0, tag)
+
         return True
     elif entry.anchor.startswith("module-"):
         soup.h1.parent.insert(0, tag)
+
         return True
     else:
         return False
@@ -126,8 +136,10 @@ def inv_entry_to_path(data):
     compatible with situations where extra meta information is encoded.
     """
     path_tuple = data[2].split("#")
+
     if len(path_tuple) > 1:
         path_str = "#".join((path_tuple[0], path_tuple[-1]))
     else:
         path_str = data[2]
+
     return path_str
